@@ -29,7 +29,7 @@ class Mmctl < Formula
     output = Utils.popen_read("#{bin}/mmctl completion zsh")
     (zsh_completion/"_mmctl").write output
 
-    # Clean up build path
+    # Clean up build path (go mod creates files that Homebrew won't delete)
     system "go", "clean", "-modcache"
   end
 
