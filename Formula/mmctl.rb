@@ -9,14 +9,9 @@ class Mmctl < Formula
   depends_on "go" => :build
 
   def install
-    # Work around broken go.mod file
-    go_mod = buildpath/"go.mod"
-    mod_source = go_mod.readlines.reject { |line| line.include? "github.com/golang/lint" }
-    go_mod.unlink
-    go_mod.write mod_source.join
-
     ENV["GOPATH"] = "#{ENV["HOME"]}/go"
 
+    system "make", "vendor"
     system "make", "build"
 
     bin.install "mmctl"
