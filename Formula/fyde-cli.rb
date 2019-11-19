@@ -2,7 +2,6 @@ class FydeCli < Formula
   desc "Fyde Enterprise Console command-line tool"
   homepage "https://github.com/fyde/fyde-cli"
   version "0.4.1"
-  bottle :unneeded
 
   if OS.mac?
     url "https://github.com/fyde/fyde-cli/releases/download/v0.4.1/fyde-cli_v0.4.1_macOS-amd64.tar.gz"
@@ -22,7 +21,45 @@ class FydeCli < Formula
     end
   end
 
+  head do
+    url "https://github.com/fyde/fyde-cli.git",
+        :branch => "develop"
+
+    depends_on "go" => :build
+
+    resource "go-swagger" do
+      url "https://github.com/go-swagger/go-swagger.git",
+          :revision => "5499abf2a8c86a57f3a8112aca47a624f609689e"
+    end
+
+    resource "govvv" do
+      url "https://github.com/ahmetb/govvv.git",
+          :revision => "eeed55f64b034cbb8d82676030f98676e1b4dae1"
+    end
+  end
+
+  bottle :unneeded
+
   def install
+    if build.head?
+      home_bindir = Pathname.new(ENV["HOME"])/"bin"
+      ENV.prepend_create_path "PATH", home_bindir
+
+      resource("go-swagger").stage do
+        system "go", "build", "-o", home_bindir/"swagger", "./cmd/swagger"
+      end
+
+      resource("govvv").stage do
+        system "go", "build", "-o", home_bindir/"govvv"
+      end
+
+      # Avoid build tools/cache resulting in a build marked as dirty
+      (buildpath/".git/info/exclude").append_lines(".brew_home/")
+
+      system "swagger", "generate", "client", "-f", "swagger.yml"
+      system "govvv", "build", "-version", version, "-o", "fyde-cli"
+    end
+
     bin.install "fyde-cli"
 
     # Install bash completion
@@ -32,9 +69,14 @@ class FydeCli < Formula
     # Install zsh completion
     output = Utils.popen_read("#{bin}/fyde-cli completion zsh")
     (zsh_completion/"_fyde-cli").write output
+
+    if build.head?
+      # Clean up build path (go mod creates files that Homebrew won't delete)
+      system "go", "clean", "-modcache"
+    end
   end
 
   test do
-    assert_match "Version #{version}", shell_output("#{bin}/fyde-cli version")
+    assert_match /Version v?#{Regexp.escape(version)}/, shell_output("#{bin}/fyde-cli version")
   end
 end
