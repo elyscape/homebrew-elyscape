@@ -28,6 +28,12 @@ class Mmctl < Formula
   end
 
   test do
-    system "mmctl", "-h"
+    expected = if build.head?
+      /mmctl \S+ -- #{version.commit}/
+    else
+      "mmctl v#{version}"
+    end
+
+    assert_match expected, shell_output("#{bin}/mmctl version")
   end
 end

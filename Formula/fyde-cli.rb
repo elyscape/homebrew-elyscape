@@ -77,6 +77,8 @@ class FydeCli < Formula
   end
 
   test do
-    assert_match /Version v?#{Regexp.escape(version)}/, shell_output("#{bin}/fyde-cli version")
+    version_output = shell_output("#{bin}/fyde-cli version")
+    assert_match /Version v?#{Regexp.escape(version)}/, version_output
+    refute_match /uncommitted changes/, version_output
   end
 end
