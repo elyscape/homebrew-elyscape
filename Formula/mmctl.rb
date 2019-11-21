@@ -11,7 +11,6 @@ class Mmctl < Formula
   def install
     ENV["GOPATH"] = "#{ENV["HOME"]}/go"
 
-    system "make", "vendor"
     system "make", "build"
 
     bin.install "mmctl"
