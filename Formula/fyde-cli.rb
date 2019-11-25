@@ -29,12 +29,7 @@ class FydeCli < Formula
 
     resource "go-swagger" do
       url "https://github.com/go-swagger/go-swagger.git",
-          :revision => "5499abf2a8c86a57f3a8112aca47a624f609689e"
-    end
-
-    resource "govvv" do
-      url "https://github.com/ahmetb/govvv.git",
-          :revision => "eeed55f64b034cbb8d82676030f98676e1b4dae1"
+          :tag => "v0.21.0"
     end
   end
 
@@ -49,15 +44,23 @@ class FydeCli < Formula
         system "go", "build", "-o", home_bindir/"swagger", "./cmd/swagger"
       end
 
-      resource("govvv").stage do
-        system "go", "build", "-o", home_bindir/"govvv"
-      end
-
-      # Avoid build tools/cache resulting in a build marked as dirty
-      (buildpath/".git/info/exclude").append_lines(".brew_home/")
-
+      # Generate code
       system "swagger", "generate", "client", "-f", "swagger.yml"
-      system "govvv", "build", "-version", version, "-o", "fyde-cli"
+      system "go", "mod", "tidy"
+      system "go", "generate", "./..."
+
+      ldflags = [
+        "-s", "-w",
+        "-X", "main.GitCommit=#{version.commit}",
+        "-X", "main.BuildDate=#{Time.now.utc.iso8601}",
+        "-X", "main.Version=#{version}",
+        "-X", "main.GitState=clean"
+      ]
+
+      # Perform build
+      system "go", "build",
+        "-o", "fyde-cli",
+        "-ldflags", ldflags.join(" ")
     end
 
     bin.install "fyde-cli"
