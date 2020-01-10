@@ -2,8 +2,8 @@ class Mmctl < Formula
   desc "Remote CLI tool for Mattermost"
   homepage "https://github.com/mattermost/mmctl/"
   url "https://github.com/mattermost/mmctl.git",
-      :tag      => "0.1.0",
-      :revision => "8a5486ec76e40c52fda51966eae997cb76dfa3e3"
+      :tag      => "0.2.1",
+      :revision => "c330b36f679b69ac33fa1e561190ad2eb3466777"
   head "https://github.com/mattermost/mmctl.git"
 
   depends_on "go" => :build
@@ -11,7 +11,7 @@ class Mmctl < Formula
   def install
     ENV["GOPATH"] = "#{ENV["HOME"]}/go"
 
-    system "make", "build"
+    system "make", "build", "BUILD_VERSION=#{version}"
 
     bin.install "mmctl"
 
